@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Serial TV</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #1e1e1e;
+        color: #fff;
+        font-family: "Poppins", sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+      header {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background: #333;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+      header input {
+        padding: 8px;
+        border-radius: 5px;
+        border: none;
+        outline: none;
+        background: #555;
+        color: #fff;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        max-width: 1000px;
+        width: 100%;
+      }
+      .series {
+        background: #292929;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        transition: transform 0.3s ease;
+      }
+      .series:hover {
+        transform: scale(1.05);
+      }
+      .series img {
+        width: 100%;
+        border-radius: 10px;
+      }
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+      }
+      .pagination button {
+        background: tomato;
+        color: #fff;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 5px;
+        transition: background 0.3s;
+      }
+      .pagination button:hover {
+        background: #d43f00;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h2 id="title">Serial TV</h2>
+      <input type="text" id="search" placeholder="Search..." />
+    </header>
+
+    <div id="serialList" class="grid"></div>
+    <div class="pagination">
+      <button id="prev">Prev</button>
+      <h2 id="currentPage">1</h2>
+      <button id="next">Next</button>
+    </div>
+
+    <script>
+      const API_URL = (query = "marvel", page = 1) =>
+        `https://api.tvmaze.com/search/shows?q=${query}&page=${page}`;
+
+      let page = 1;
+      const serialList = document.getElementById("serialList");
+      const currentPage = document.getElementById("currentPage");
+      const searchInput = document.getElementById("search");
+
+      async function fetchShows(query, page) {
+        serialList.innerHTML = "<p>Loading...</p>";
+        try {
+          const res = await fetch(API_URL(query, page));
+          const data = await res.json();
+          showSerials(data);
+        } catch (error) {
+          serialList.innerHTML = "<p>Failed to load data.</p>";
+        }
+      }
+
+      function showSerials(serials) {
+        serialList.innerHTML = "";
+        serials.forEach(({ show }) => {
+          const { name, genres, image, language } = show;
+          const imgSrc = image?.medium || "https://via.placeholder.com/250";
+
+          const serialCard = document.createElement("div");
+          serialCard.classList.add("series");
+          serialCard.innerHTML = `
+                    <img src="${imgSrc}" alt="${name}"/>
+                    <h3>${name}</h3>
+                    <p>${genres.join(", ") || "Unknown Genre"}</p>
+                    <p>${language}</p>
+                `;
+          serialList.appendChild(serialCard);
+        });
+      }
+
+      function updatePage() {
+        currentPage.textContent = page;
+        fetchShows(searchInput.value || "marvel", page);
+      }
+
+      document.getElementById("next").addEventListener("click", () => {
+        page++;
+        updatePage();
+      });
+
+      document.getElementById("prev").addEventListener("click", () => {
+        if (page > 1) page--;
+        updatePage();
+      });
+
+      searchInput.addEventListener("input", () => {
+        page = 1;
+        updatePage();
+      });
+
+      updatePage();
+    </script>
+  </body>
+</html>
